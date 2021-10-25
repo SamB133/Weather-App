@@ -85,11 +85,13 @@
 			</p>
 			<p>
 				The humidity level is {humidity}%.
-				{#if windGust === undefined}
-					Wind speed is {windSpeed}MPH heading at {windDegrees}°.
-				{:else}
-					Wind speed is {windSpeed}MPH heading at {windDegrees}°, with
-					gusts at {windGust}MPH.
+				{#if windSpeed > 0}
+					{#if windGust === undefined}
+						Wind speed is {windSpeed}MPH heading at {windDegrees}°.
+					{:else}
+						Wind speed is {windSpeed}MPH heading at {windDegrees}°,
+						with gusts at {windGust}MPH.
+					{/if}
 				{/if}
 			</p>
 		{:else}
