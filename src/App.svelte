@@ -2,21 +2,7 @@
 	import { OPENWEATHERMAP_API_KEY } from "./env.json";
 
 	let location;
-	let showData = false;
-	let mainDescription,
-		description,
-		icon,
-		temp,
-		feelsLike,
-		tempMin,
-		tempMax,
-		humidity,
-		windSpeed,
-		windDegrees,
-		windGust,
-		name,
-		code,
-		message;
+	let searchPromise;
 
 	function searchLocation(location) {
 		let search;
@@ -26,34 +12,34 @@
 			search = `q=${location}`;
 		}
 
-		fetch(
+		searchPromise = fetch(
 			`http://api.openweathermap.org/data/2.5/weather?${search}&units=imperial&appid=${OPENWEATHERMAP_API_KEY}`
 		)
 			.then((response) => {
 				return response.json();
 			})
 			.then((data) => {
-				if (data.cod === 200) {
-					code = data.cod;
-					mainDescription = data.weather[0].main;
-					description = data.weather[0].description;
-					icon = data.weather[0].icon;
-					temp = data.main.temp;
-					feelsLike = data.main.feels_like;
-					tempMin = data.main.temp_min;
-					tempMax = data.main.temp_max;
-					humidity = data.main.humidity;
-					windSpeed = data.wind.speed;
-					windDegrees = data.wind.deg;
-					windGust = data.wind.gust;
-					name = data.name;
-				} else {
-					code = data.cod;
-					message = data.message;
+				if (data.cod != 200) {
+					throw new Error(data.message);
 				}
-			});
 
-		showData = true;
+				return {
+					code: data.cod,
+					message: data.message,
+					mainDescription: data.weather[0].main,
+					description: data.weather[0].description,
+					icon: data.weather[0].icon,
+					temp: data.main.temp,
+					feelsLike: data.main.feels_like,
+					tempMin: data.main.temp_min,
+					tempMax: data.main.temp_max,
+					humidity: data.main.humidity,
+					windSpeed: data.wind.speed,
+					windDegrees: data.wind.deg,
+					windGust: data.wind.gust,
+					name: data.name,
+				};
+			});
 	}
 </script>
 
@@ -68,35 +54,39 @@
 	/>
 	<button on:click={searchLocation(location)}>Search</button>
 
-	{#if showData}
-		{#if code === 200}
-			<p>
-				<img
-					alt="Weather Icon"
-					src="http://openweathermap.org/img/wn/{icon}@2x.png"
-				/>
-			</p>
-			<p>
-				The weather in {name} is {mainDescription} with {description}.
-			</p>
-			<p>
-				The temperature is {temp}°F and feels like {feelsLike}°F, with a
-				high of {tempMax}°F and a low of {tempMin}°F.
-			</p>
-			<p>
-				The humidity level is {humidity}%.
-				{#if windSpeed > 0}
-					{#if windGust === undefined}
-						Wind speed is {windSpeed}MPH heading at {windDegrees}°.
-					{:else}
-						Wind speed is {windSpeed}MPH heading at {windDegrees}°,
-						with gusts at {windGust}MPH.
+	{#if searchPromise}
+		{#await searchPromise}
+			<p>Loading, please wait...</p>
+		{:then data}
+			{#if data.code === 200}
+				<p>
+					<img
+						alt="Weather Icon"
+						src="http://openweathermap.org/img/wn/{data.icon}@2x.png"
+					/>
+				</p>
+				<p>
+					The weather in {data.name} is {data.mainDescription} with {data.description}.
+				</p>
+				<p>
+					The temperature is {data.temp}°F and feels like {data.feelsLike}°F,
+					with a high of {data.tempMax}°F and a low of {data.tempMin}°F.
+				</p>
+				<p>
+					The humidity level is {data.humidity}%.
+					{#if data.windSpeed > 0}
+						{#if data.windGust === undefined}
+							Wind speed is {data.windSpeed}MPH heading at {data.windDegrees}°.
+						{:else}
+							Wind speed is {data.windSpeed}MPH heading at {data.windDegrees}°,
+							with gusts at {data.windGust}MPH.
+						{/if}
 					{/if}
-				{/if}
-			</p>
-		{:else}
-			<p>Error {code}: {message}</p>
-		{/if}
+				</p>
+			{/if}
+		{:catch err}
+			<p>{err}</p>
+		{/await}
 	{/if}
 </main>
 
